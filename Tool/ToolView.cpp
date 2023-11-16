@@ -38,7 +38,8 @@ END_MESSAGE_MAP()
 
 // CToolView »ý¼º/¼Ò¸ê
 
-CToolView::CToolView() : m_pTerrain(nullptr)
+CToolView::CToolView() : m_pTerrain(nullptr), m_iDrawID_Ground(0), m_iDrawID_Wall(0), m_iDrawID_Drcorate(0),
+m_bGround(false), m_bWall(false), m_bDecorate(false)
 {
 
 
@@ -108,8 +109,6 @@ void CToolView::OnInitialUpdate()
 
 	m_pTerrain->Set_MainView(this);
 
-	m_iDrawID = 0;
-
 }
 
 
@@ -119,9 +118,24 @@ void CToolView::OnLButtonDown(UINT nFlags, CPoint point)
 
 	CScrollView::OnLButtonDown(nFlags, point);
 
-	m_pTerrain->Picking_Grass(D3DXVECTOR3((float)point.x + GetScrollPos(0),
-		(float)point.y + GetScrollPos(1),
-		0.f), m_iDrawID);
+	if (m_bGround)
+	{
+		m_pTerrain->Picking_Grass(D3DXVECTOR3((float)point.x + GetScrollPos(0),
+			(float)point.y + GetScrollPos(1),
+			0.f), m_iDrawID_Ground);
+	}
+	else if (m_bWall)
+	{
+		m_pTerrain->Add_Wall(D3DXVECTOR3((float)point.x + GetScrollPos(0),
+			(float)point.y + GetScrollPos(1),
+			0.f), m_iDrawID_Wall);
+	}
+	else if (m_bDecorate)
+	{
+
+
+	}
+
 
 	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
 	CMiniView* pMiniView = dynamic_cast<CMiniView*>(pMainFrm->m_SecondSplitter.GetPane(0, 0));
@@ -143,17 +157,15 @@ void CToolView::OnRButtonDown(UINT nFlags, CPoint point)
 	CScrollView::OnRButtonDown(nFlags, point);
 
 
-	if (GetAsyncKeyState('D') & 0x8000)
+	if (m_bWall)
 	{
 		m_pTerrain->Delete_Wall(D3DXVECTOR3((float)point.x + GetScrollPos(0),
 			(float)point.y + GetScrollPos(1),
 			0.f));
 	}
-	else
+	else if (m_bDecorate)
 	{
-		m_pTerrain->Add_Wall(D3DXVECTOR3((float)point.x + GetScrollPos(0),
-			(float)point.y + GetScrollPos(1),
-			0.f), m_iDrawID);
+
 	}
 
 	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
@@ -171,19 +183,31 @@ void CToolView::OnMouseMove(UINT nFlags, CPoint point)
 
 	CScrollView::OnMouseMove(nFlags, point);
 
-	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
+	/*if (m_bGround && GetAsyncKeyState(VK_LBUTTON) & 0x8000)
 	{
 		m_pTerrain->Picking_Grass(D3DXVECTOR3((float)point.x + GetScrollPos(0),
 			(float)point.y + GetScrollPos(1),
 			0.f),
-			m_iDrawID);
-		Invalidate(FALSE);
-
-		CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
-		CMiniView* pMiniView = dynamic_cast<CMiniView*>(pMainFrm->m_SecondSplitter.GetPane(0, 0));
-
-		pMiniView->Invalidate(FALSE);
+			m_iDrawID_Ground);
 	}
+	else if (m_bWall && GetAsyncKeyState(VK_LBUTTON) & 0x8000)
+	{
+		m_pTerrain->Add_Wall(D3DXVECTOR3((float)point.x + GetScrollPos(0),
+			(float)point.y + GetScrollPos(1),
+			0.f), m_iDrawID_Wall);
+	}*/
+
+
+
+
+
+	Invalidate(FALSE);
+
+	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
+	CMiniView* pMiniView = dynamic_cast<CMiniView*>(pMainFrm->m_SecondSplitter.GetPane(0, 0));
+
+	pMiniView->Invalidate(FALSE);
+	
 }
 
 void CToolView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)

@@ -62,6 +62,7 @@
 #include <unordered_map>
 #include <map>
 #include <string>
+#include <stack>
 
 #include <fstream>
 

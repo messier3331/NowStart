@@ -50,7 +50,13 @@ public:
 
 public:
 	CTerrain*		m_pTerrain;
-	int				m_iDrawID;
+	int				m_iDrawID_Ground;
+	int				m_iDrawID_Wall;
+	int				m_iDrawID_Drcorate;
+
+	bool			m_bGround;
+	bool			m_bWall;
+	bool			m_bDecorate;
 
 public:
 	afx_msg void OnDestroy();

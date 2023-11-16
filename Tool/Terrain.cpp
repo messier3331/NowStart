@@ -191,10 +191,19 @@ void CTerrain::Release()
 	for_each(m_vecTile.begin(), m_vecTile.end(), Safe_Delete<TILE*>);
 	m_vecTile.clear();
 	m_vecTile.shrink_to_fit();
-
 	for_each(m_vecWall.begin(), m_vecWall.end(), Safe_Delete<TILE*>);
 	m_vecWall.clear();
 	m_vecWall.shrink_to_fit();
+	for_each(m_vecDeco.begin(), m_vecDeco.end(), Safe_Delete<TILE*>);
+	m_vecDeco.clear();
+	m_vecDeco.shrink_to_fit();
+
+	DeleteStack(m_sUndoTile);
+	DeleteStack(m_sUndoWall);
+	DeleteStack(m_sUndoDeco);
+	DeleteStack(m_sRedoTile);
+	DeleteStack(m_sRedoWall);
+	DeleteStack(m_sRedoDeco);
 
 }
 
@@ -328,6 +337,8 @@ bool CTerrain::Picking_Dot(const D3DXVECTOR3& vPos, const int& iIndex)
 
 void CTerrain::Picking_Grass(const D3DXVECTOR3& vPos, const int& Draw)
 {
+	SaveUndo();		// 행동 전 저장
+
 	int X(0), Y(0);
 	int iIndex(0);
 
@@ -336,10 +347,13 @@ void CTerrain::Picking_Grass(const D3DXVECTOR3& vPos, const int& Draw)
 	iIndex = (Y * TILEX) + X;
 
 	m_vecTile[iIndex]->byDrawID = Draw;
+
 }
 
 void CTerrain::Add_Wall(const D3DXVECTOR3& vPos, const int& Draw)
 {
+	SaveUndo();
+
 	int X(0), Y(0);
 	X = ((int)vPos.x / TILECX) * TILECX;
 	Y = ((int)vPos.y / TILECY) * TILECY;
@@ -365,6 +379,8 @@ void CTerrain::Add_Wall(const D3DXVECTOR3& vPos, const int& Draw)
 
 void CTerrain::Delete_Wall(const D3DXVECTOR3& vPos)
 {
+	SaveUndo();
+
 	int X(0), Y(0);
 	X = ((int)vPos.x / TILECX) * TILECX;
 	Y = ((int)vPos.y / TILECY) * TILECY;
@@ -377,6 +393,78 @@ void CTerrain::Delete_Wall(const D3DXVECTOR3& vPos)
 			iter = m_vecWall.erase(iter);
 			return;
 		}
+	}
+}
+
+void CTerrain::SaveUndo()
+{
+	while (!m_sRedoTile.empty()) m_sRedoTile.pop();
+	while (!m_sRedoWall.empty()) m_sRedoWall.pop();
+	//while (!m_sRedoDeco.empty()) m_sRedoDeco.pop();
+
+	m_sUndoTile.push(m_vecTile);
+	m_sUndoWall.push(m_vecWall);
+	//m_sUndoDeco.push(m_vecDeco);
+}
+
+void CTerrain::Undo()			// 되돌리기
+{
+	if (!m_sUndoTile.empty())
+	{
+		m_sRedoTile.push(m_vecTile);	// 되돌리기 전에 Redo스택 쌓고
+		m_vecTile = m_sUndoTile.top();	// 현재 타일을 가장 최신으로 되돌림
+		m_sUndoTile.pop();				// 그리고 undo스택 날림
+	}
+
+	if (!m_sUndoWall.empty())
+	{
+		m_sRedoWall.push(m_vecWall);	// 되돌리기 전에 Redo스택 쌓고
+		m_vecWall = m_sUndoWall.top();	// 현재 타일을 가장 최신으로 되돌림
+		m_sUndoWall.pop();				// 그리고 undo스택 날림
+	}
+
+	//if (!m_sUndoDeco.empty())
+	//{
+	//	m_sRedoDeco.push(m_vecDeco);	// 되돌리기 전에 Redo스택 쌓고
+	//	m_vecDeco = m_sUndoDeco.top();	// 현재 타일을 가장 최신으로 되돌림
+	//	m_sUndoDeco.pop();				// 그리고 undo스택 날림
+	//}
+}
+
+void CTerrain::Redo()			// 되돌린거 다시 하기
+{
+	if (!m_sRedoTile.empty())
+	{
+		m_sUndoTile.push(m_vecTile);	// 되돌린거 무르기 전에 다시 Undo 스택 쌓고
+		m_vecTile = m_sRedoTile.top();	// 현재 타일을 다시 무름
+		m_sRedoTile.pop();				// 그리고 Redo스택 날림
+	}
+
+	if (!m_sRedoWall.empty())
+	{
+		m_sUndoWall.push(m_vecWall);	// 되돌리기 전에 Redo스택 쌓고
+		m_vecWall = m_sRedoWall.top();	// 현재 타일을 다시 무름
+		m_sRedoWall.pop();				// 그리고 undo스택 날림
+	}
+
+	//if (!m_sRedoDeco.empty())
+	//{
+	//	m_sUndoDeco.push(m_vecDeco);	
+	//	m_vecDeco = m_sRedoDeco.top();
+	//	m_sRedoDeco.pop();				
+	//}
+}
+
+void CTerrain::DeleteStack(stack<vector<TILE*>> S)
+{
+	while (!S.empty()) {
+		vector<TILE*>& V = S.top();
+
+		for (TILE* t : V) {
+			delete t;
+		}
+		V.clear();
+		S.pop();
 	}
 }
 

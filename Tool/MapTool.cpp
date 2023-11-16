@@ -26,33 +26,52 @@ CMapTool::~CMapTool()
 void CMapTool::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_LIST1, m_ListBox);
-	DDX_Control(pDX, IDC_PICTURE, m_Picture);
+	DDX_Control(pDX, IDC_LIST1, m_ListBox_Ground);
+	DDX_Control(pDX, IDC_LIST2, m_ListBox_Wall);
+	DDX_Control(pDX, IDC_LIST3, m_ListBox_Decorate);
+
+	DDX_Control(pDX, IDC_PICTURE, m_Picture_Ground);
+	DDX_Control(pDX, IDC_PICTURE2, m_Picture_Wall);
+	DDX_Control(pDX, IDC_PICTURE3, m_Picture_Decorate);
+
+	DDX_Control(pDX, IDC_RADIO1, m_Pick[0]);
+	DDX_Control(pDX, IDC_RADIO2, m_Pick[1]);
+	DDX_Control(pDX, IDC_RADIO3, m_Pick[2]);
+
+
 }
 
 
 BEGIN_MESSAGE_MAP(CMapTool, CDialog)
-	ON_LBN_SELCHANGE(IDC_LIST1, &CMapTool::OnListBox)
+	ON_LBN_SELCHANGE(IDC_LIST1, &CMapTool::OnListBox_Ground)
+	ON_LBN_SELCHANGE(IDC_LIST2, &CMapTool::OnListBox_Wall)
+	ON_LBN_SELCHANGE(IDC_LIST3, &CMapTool::OnListBox_Decorate)
 	ON_WM_DROPFILES()
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON1, &CMapTool::OnSaveData)
+	ON_BN_CLICKED(IDC_RADIO1, &CMapTool::OnBnClickedRadio1)
+	ON_BN_CLICKED(IDC_RADIO2, &CMapTool::OnBnClickedRadio2)
+	ON_BN_CLICKED(IDC_RADIO3, &CMapTool::OnBnClickedRadio3)
+
+	ON_BN_CLICKED(IDC_BUTTON3, &CMapTool::MapUndo)
+	ON_BN_CLICKED(IDC_BUTTON10, &CMapTool::MapRedo)
 END_MESSAGE_MAP()
 
 
 // CMapTool 메시지 처리기입니다.
 
 
-void CMapTool::OnListBox()
+void CMapTool::OnListBox_Ground()
 {
 	UpdateData(TRUE);
 
 	CString		strSelectName;
 
-	int		iIndex = m_ListBox.GetCurSel();
+	int		iIndex = m_ListBox_Ground.GetCurSel();
 
-	m_ListBox.GetText(iIndex, strSelectName);
+	m_ListBox_Ground.GetText(iIndex, strSelectName);
 
-	auto	iter = m_mapPngImg.find(strSelectName);
+	auto	iter = m_mapPngImg_Ground.find(strSelectName);
 
 
 	int iSkip = strSelectName.Find(_T("Grass"));
@@ -64,22 +83,103 @@ void CMapTool::OnListBox()
 	CString strName = strSelectName.Mid(iSkip);
 	int iDrawID = _ttoi(strName);
 
+	// AfxGetApp : 메인 쓰레드를 갖고 있는 현재 메인 app을 반환
+	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
+	// GetPane(행, 열) : 행과 열에 해당하는 클래스의 정보를 얻어오는 함수 
+	CToolView* pMainView = dynamic_cast<CToolView*>(pMainFrm->m_MainSplitter.GetPane(0, 1));
+	pMainView->m_iDrawID_Ground = iDrawID;
 
+
+
+	if (iter == m_mapPngImg_Ground.end())
+		return;
+
+	m_Picture_Ground.SetBitmap(*(iter->second));
+
+
+	UpdateData(FALSE);
+}
+
+void CMapTool::OnListBox_Wall()
+{
+	UpdateData(TRUE);
+
+	CString		strSelectName;
+
+	int		iIndex = m_ListBox_Wall.GetCurSel();
+
+	m_ListBox_Wall.GetText(iIndex, strSelectName);
+
+	auto	iter = m_mapPngImg_Wall.find(strSelectName);
+
+	int iSkip = strSelectName.Find(_T("Grass"));
+	if (iSkip != -1)
+	{
+		iSkip += _tcslen(_T("Grass"));
+	}
+
+	CString strName = strSelectName.Mid(iSkip);
+	int iDrawID = _ttoi(strName);
 
 	// AfxGetApp : 메인 쓰레드를 갖고 있는 현재 메인 app을 반환
 	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
 	// GetPane(행, 열) : 행과 열에 해당하는 클래스의 정보를 얻어오는 함수 
 	CToolView* pMainView = dynamic_cast<CToolView*>(pMainFrm->m_MainSplitter.GetPane(0, 1));
+	pMainView->m_iDrawID_Wall = iDrawID;
 
-	pMainView->m_iDrawID = iDrawID;
 
-	if (iter == m_mapPngImg.end())
+	if (iter == m_mapPngImg_Wall.end())
 		return;
 
-	m_Picture.SetBitmap(*(iter->second));
+	m_Picture_Wall.SetBitmap(*(iter->second));
 
 
 	UpdateData(FALSE);
+
+
+}
+
+void CMapTool::OnListBox_Decorate()
+{
+
+	UpdateData(TRUE);
+
+	CString		strSelectName;
+
+	int		iIndex = m_ListBox_Decorate.GetCurSel();
+
+
+	m_ListBox_Decorate.GetText(iIndex, strSelectName);
+
+
+	auto	iter = m_mapPngImg_Decorate.find(strSelectName);
+
+	int iSkip = strSelectName.Find(_T("Grass"));
+	if (iSkip != -1)
+	{
+		iSkip += _tcslen(_T("Grass"));
+	}
+
+	CString strName = strSelectName.Mid(iSkip);
+	int iDrawID = _ttoi(strName);
+
+	// AfxGetApp : 메인 쓰레드를 갖고 있는 현재 메인 app을 반환
+	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
+	// GetPane(행, 열) : 행과 열에 해당하는 클래스의 정보를 얻어오는 함수 
+	CToolView* pMainView = dynamic_cast<CToolView*>(pMainFrm->m_MainSplitter.GetPane(0, 1));
+	pMainView->m_iDrawID_Drcorate = iDrawID;
+
+
+
+	if (iter == m_mapPngImg_Decorate.end())
+		return;
+
+	m_Picture_Decorate.SetBitmap(*(iter->second));
+
+
+	UpdateData(FALSE);
+
+
 }
 
 
@@ -93,9 +193,21 @@ void CMapTool::OnDropFiles(HDROP hDropInfo)
 	TCHAR		szFilePath[MAX_PATH] = L"";
 	TCHAR		szFileName[MAX_STR] = L"";
 
+	POINT pt;
+	GetCursorPos(&pt);
+	ScreenToClient(&pt);
+
+	CRect rectGround, rectWall, rectDecorate;
+	m_ListBox_Ground.GetWindowRect(&rectGround);
+	m_ListBox_Wall.GetWindowRect(&rectWall);
+	m_ListBox_Decorate.GetWindowRect(&rectDecorate);
+	ScreenToClient(&rectGround);
+	ScreenToClient(&rectWall);
+	ScreenToClient(&rectDecorate);
+
+
 	// DragQueryFile : 드롭된 파일 중 0번 인덱스에 해당하는 파일의 전체 경로를 얻어옴
 	// 2인자 :  0xffffffff(-1)로 지정되면 드롭된 파일의 개수를 반환
-
 	int	iFileCnt = DragQueryFile(hDropInfo, 0xffffffff, nullptr, 0);
 
 	for (int i = 0; i < iFileCnt; ++i)
@@ -112,16 +224,50 @@ void CMapTool::OnDropFiles(HDROP hDropInfo)
 
 		strFileName = szFileName;
 
-		auto iter = m_mapPngImg.find(strFileName);
-
-		if (iter == m_mapPngImg.end())
+		if (rectGround.PtInRect(pt))
+			// 마우스로 드래그 앤 드랍한 부분이 m_ListBox_Ground 리스트 박스일 경우
 		{
-			CImage*	pPngImg = new CImage;
-			pPngImg->Load(strRelative);
+			auto iter = m_mapPngImg_Ground.find(strFileName);
 
-			m_mapPngImg.insert({ strFileName, pPngImg });
-			m_ListBox.AddString(strFileName);
-		}		
+			if (iter == m_mapPngImg_Ground.end())
+			{
+				CImage* pPngImg = new CImage;
+
+				pPngImg->Load(strRelative);
+				m_mapPngImg_Ground.insert({ strFileName, pPngImg });
+				m_ListBox_Ground.AddString(strFileName);
+			}
+
+		}
+		else if (rectWall.PtInRect(pt))
+			/*마우스로 드래그 앤 드랍 한 부분이 m_ListBox_Wall 리스트 박스일경우*/
+		{
+			auto iter = m_mapPngImg_Wall.find(strFileName);
+
+			if (iter == m_mapPngImg_Wall.end())
+			{
+				CImage* pPngImg = new CImage;
+
+				pPngImg->Load(strRelative);
+				m_mapPngImg_Wall.insert({ strFileName, pPngImg });
+				m_ListBox_Wall.AddString(strFileName);
+			}
+		}
+		else if (rectDecorate.PtInRect(pt))
+			/*마우스로 드래그 앤 드랍 한 부분이 m_ListBox_Decorate 리스트 박스일경우*/
+		{
+			auto iter = m_mapPngImg_Decorate.find(strFileName);
+
+			if (iter == m_mapPngImg_Decorate.end())
+			{
+				CImage* pPngImg = new CImage;
+
+				pPngImg->Load(strRelative);
+				m_mapPngImg_Decorate.insert({ strFileName, pPngImg });
+				m_ListBox_Decorate.AddString(strFileName);
+			}
+		}
+			
 	}
 
 	Horizontal_Scroll();
@@ -136,13 +282,13 @@ void CMapTool::Horizontal_Scroll()
 
 	int		iWidth(0);
 
-	CDC*	pDC = m_ListBox.GetDC();
+	CDC*	pDC = m_ListBox_Ground.GetDC();
 
 	// GetCount : 리스트 박스 목록의 개수를 얻어옴
-	for (int i = 0; i < m_ListBox.GetCount(); ++i)
+	for (int i = 0; i < m_ListBox_Ground.GetCount(); ++i)
 	{
 		//	GetText: 인덱스에 해당하는 목록의 문자열을 얻어옴
-		m_ListBox.GetText(i, strName);
+		m_ListBox_Ground.GetText(i, strName);
 
 		// 현재 문자열의 길이를 픽셀 단위로 변환
 		size = pDC->GetTextExtent(strName);
@@ -151,11 +297,11 @@ void CMapTool::Horizontal_Scroll()
 			iWidth = size.cx;
 	}
 
-	m_ListBox.ReleaseDC(pDC);
+	m_ListBox_Ground.ReleaseDC(pDC);
 
 	// GetHorizontalExtent : 리스트 박스가 가로 스크롤 바를 생성할 수 있는 최대 범위를 얻어오는 함수
-	if (iWidth > m_ListBox.GetHorizontalExtent())
-		m_ListBox.SetHorizontalExtent(iWidth);
+	if (iWidth > m_ListBox_Ground.GetHorizontalExtent())
+		m_ListBox_Ground.SetHorizontalExtent(iWidth);
 
 }
 
@@ -165,12 +311,26 @@ void CMapTool::OnDestroy()
 {
 	CDialog::OnDestroy();
 
-	for_each(m_mapPngImg.begin(), m_mapPngImg.end(), [](auto& MyPair)
+	for_each(m_mapPngImg_Ground.begin(), m_mapPngImg_Ground.end(), [](auto& MyPair)
 	{
 		MyPair.second->Destroy();
 		Safe_Delete(MyPair.second);
 	});
-	m_mapPngImg.clear();
+	m_mapPngImg_Ground.clear();
+
+	for_each(m_mapPngImg_Wall.begin(), m_mapPngImg_Wall.end(), [](auto& MyPair)
+		{
+			MyPair.second->Destroy();
+			Safe_Delete(MyPair.second);
+		});
+	m_mapPngImg_Wall.clear();
+
+	for_each(m_mapPngImg_Decorate.begin(), m_mapPngImg_Decorate.end(), [](auto& MyPair)
+		{
+			MyPair.second->Destroy();
+			Safe_Delete(MyPair.second);
+		});
+	m_mapPngImg_Decorate.clear();
 
 	
 }
@@ -235,4 +395,50 @@ void CMapTool::OnSaveData()
 
 		CloseHandle(hFile);
 	}
+}
+
+
+void CMapTool::OnBnClickedRadio1()
+{
+	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
+	CToolView* pMainView = dynamic_cast<CToolView*>(pMainFrm->m_MainSplitter.GetPane(0, 1));
+	pMainView->m_bGround = true;
+	pMainView->m_bWall = false;
+	pMainView->m_bDecorate = false;
+}
+
+void CMapTool::OnBnClickedRadio2()
+{
+	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
+	CToolView* pMainView = dynamic_cast<CToolView*>(pMainFrm->m_MainSplitter.GetPane(0, 1));
+	pMainView->m_bGround = false;
+	pMainView->m_bWall = true;
+	pMainView->m_bDecorate = false;
+}
+
+void CMapTool::OnBnClickedRadio3()
+{
+	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
+	CToolView* pMainView = dynamic_cast<CToolView*>(pMainFrm->m_MainSplitter.GetPane(0, 1));
+	pMainView->m_bGround = false;
+	pMainView->m_bWall = false;
+	pMainView->m_bDecorate = true;
+}
+
+
+void CMapTool::MapUndo()
+{
+	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
+	CToolView* pMainView = dynamic_cast<CToolView*>(pMainFrm->m_MainSplitter.GetPane(0, 1));
+	pMainView->m_pTerrain->Undo();
+	pMainView->Invalidate(FALSE);
+}
+
+
+void CMapTool::MapRedo()
+{
+	CMainFrame* pMainFrm = dynamic_cast<CMainFrame*>(AfxGetApp()->GetMainWnd());
+	CToolView* pMainView = dynamic_cast<CToolView*>(pMainFrm->m_MainSplitter.GetPane(0, 1));
+	pMainView->m_pTerrain->Redo();
+	pMainView->Invalidate(FALSE);
 }

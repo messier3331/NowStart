@@ -31,10 +31,17 @@
 #define IDC_CHECK3                      1013
 #define IDC_BUTTON3                     1014
 #define IDC_EDIT6                       1015
+#define IDC_BUTTON10                    1015
 #define IDC_BUTTON4                     1016
 #define IDC_BUTTON5                     1017
 #define IDC_PICTURE                     1017
 #define IDC_BUTTON6                     1018
+#define IDC_TAB1                        1018
+#define IDC_LIST2                       1019
+#define IDC_LIST3                       1020
+#define IDC_PICTURE2                    1022
+#define IDC_PICTURE3                    1023
+#define IDC_CHECK6                      1024
 
 // Next default values for new objects
 // 
@@ -42,7 +49,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        314
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1024
 #define _APS_NEXT_SYMED_VALUE           316
 #endif
 #endif
